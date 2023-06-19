@@ -19,6 +19,8 @@
 #include "ssh.h"
 #include "sntp.h"
 
+#define LOG_FILE_PATH "/sdcard/log.txt"
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////// SD CARD //////////////////////////////////////////////////////////////////////////////////
@@ -46,6 +48,26 @@ static FILE *log_file;
 #define PIN_NUM_CS 13
 #endif // USE_SPI_MODE
 
+static void READ_FILE()
+{
+	FILE *file;
+	char line[256];
+	// Open the file in read mode
+	file = fopen(LOG_FILE_PATH, "r");
+	if (file == NULL)
+	{
+		printf("Error opening the file.\n");
+	}
+
+	// Read the file line by line
+	while (fgets(line, sizeof(line), file))
+	{
+		printf("%s", line);
+	}
+	// Close the file
+	fclose(file);
+}
+
 /**
  * @brief executed function every time an event is logged
  *
@@ -64,15 +86,15 @@ static int PRINT_TO_SD_CARD(const char *fmt, va_list list)
 	{
 		return -1;
 	}
-	// int res =
-	vfprintf(log_file, fmt, list);
+	int res = vfprintf(log_file, fmt, list);
 	// Committing changes to the file on each write is slower,
 	// but ensures that no data will be lost.
 	// fsync after might be called every 50 log messages or so,
 	// or after 100ms passed since last fsync, and so on.
 	fsync(fileno(log_file));
 
-	return 0;
+	// READ_FILE();
+	return res;
 }
 
 /**
@@ -150,12 +172,11 @@ void MOUNT_SD_CARD()
 		return;
 	}
 	// Check if the file exists
-	char filename[] = "/sdcard/log.txt";
-	if (access(filename, F_OK) == 0)
+	if (access(LOG_FILE_PATH, F_OK) == 0)
 	{
 		ESP_LOGI(TAG, "File exists");
 		// Attempt to delete the file
-		if (remove(filename) == 0)
+		if (remove(LOG_FILE_PATH) == 0)
 		{
 			ESP_LOGI(TAG, "File deleted successfully");
 		}
@@ -165,7 +186,7 @@ void MOUNT_SD_CARD()
 		}
 	}
 	// Set the file stream
-	log_file = fopen(filename, "w");
+	log_file = fopen(LOG_FILE_PATH, "w");
 	if (log_file == NULL)
 	{
 		ESP_LOGE(TAG, "Failed to open file for logging!");

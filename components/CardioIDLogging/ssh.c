@@ -292,7 +292,7 @@ error_list sftpClientTest(void)
         if (error)
             break;
 
-        osDelayTask(1000);
+        sleep(1000);
 
         TRACE_INFO("Opening File %s - %s...\r\n", temp_filename,
                    ipAddrToString(&ipAddr, NULL));
@@ -343,7 +343,7 @@ error_list sftpClientTest(void)
         // Read the file line by line
         while (fgets(write_buffer, sizeof(write_buffer), file))
         {
-            error = sftpClientWriteFile(&sftpClientContext, &write_buffer, sizeof(write_buffer), &write_n, 0);
+            error = sftpClientWriteFile(&sftpClientContext, &write_buffer, strlen(write_buffer), &write_n, 0);
             // Any error to report?
             if (error)
             {
@@ -380,7 +380,7 @@ error_list sftpClientTest(void)
 
         TRACE_INFO("Renaming File %s to %s...\r\n", temp_filename, filename,
                    ipAddrToString(&ipAddr, NULL));
-        // error = sftpClientRenameFile(&sftpClientContext, temp_filename, filename);
+        error = sftpClientRenameFile(&sftpClientContext, temp_filename, filename);
         if (error)
         {
             TRACE_INFO("Error renaming File %s...\r\n",

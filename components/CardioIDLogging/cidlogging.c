@@ -57,18 +57,21 @@ static FILE *log_file;
  * @param  list 	TBD
  *
  */
+
 static int PRINT_TO_SD_CARD(const char *fmt, va_list list)
 {
 	if (log_file == NULL)
 	{
 		return -1;
 	}
-	int res = vfprintf(log_file, fmt, list);
+	// int res =
+	vfprintf(log_file, fmt, list);
 	// Committing changes to the file on each write is slower,
 	// but ensures that no data will be lost.
 	// fsync after might be called every 50 log messages or so,
 	// or after 100ms passed since last fsync, and so on.
 	fsync(fileno(log_file));
+
 	return 0;
 }
 
@@ -146,8 +149,23 @@ void MOUNT_SD_CARD()
 		}
 		return;
 	}
+	// Check if the file exists
+	char filename[] = "/sdcard/log.txt";
+	if (access(filename, F_OK) == 0)
+	{
+		ESP_LOGI(TAG, "File exists");
+		// Attempt to delete the file
+		if (remove(filename) == 0)
+		{
+			ESP_LOGI(TAG, "File deleted successfully");
+		}
+		else
+		{
+			ESP_LOGE(TAG, "Error deleting the file");
+		}
+	}
 	// Set the file stream
-	log_file = fopen("/sdcard/log.txt", "a");
+	log_file = fopen(filename, "w");
 	if (log_file == NULL)
 	{
 		ESP_LOGE(TAG, "Failed to open file for logging!");
@@ -155,7 +173,7 @@ void MOUNT_SD_CARD()
 	else
 	{
 		ESP_LOGI(TAG, "Redirecting log output to SD card!");
-		esp_log_set_vprintf(&PRINT_TO_SD_CARD);
+		esp_log_set_vprintf(PRINT_TO_SD_CARD);
 	}
 	// Card has been initialized, print its properties
 	sdmmc_card_print_info(stdout, card);
@@ -242,5 +260,5 @@ void SEND_LOG_OVER_SSH()
 void CARDIO_LOGGING_INIT()
 {
 	SNTP_INIT();
-	// MOUNT_SD_CARD();
+	MOUNT_SD_CARD();
 }

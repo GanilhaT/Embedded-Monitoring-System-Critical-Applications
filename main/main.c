@@ -30,4 +30,11 @@ void app_main(void)
 	*/
 
 	SEND_LOG_OVER_SSH();
+
+	while (1)
+	{
+		// Sleep for 10 seconds
+		sleep(10);
+		printf("Terminated...");
+	}
 }

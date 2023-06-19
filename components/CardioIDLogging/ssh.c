@@ -60,10 +60,11 @@
 #define APP_WIFI_AP_PASSWORD "n98e3854"
 
 // Application configuration
-#define APP_SFTP_SERVER_NAME "79.169.204.105"
+#define APP_SFTP_SERVER_NAME "79.169.196.72"
 #define APP_SFTP_SERVER_PORT 226
 #define APP_SFTP_USERNAME "ganilha"
 #define APP_SFTP_PASSWORD "16121995"
+#define APP_SFTP_TEMP_FILENAME "/home/ganilha/kibana/temp-cardioid-test-"
 #define APP_SFTP_FILENAME "/home/ganilha/kibana/cardioid-test-"
 
 // List of trusted host keys
@@ -267,15 +268,15 @@ error_list sftpClientTest(void)
         }
 
         // Open the specified file for reading
-        char filename[100];
+        char temp_filename[100];
         // Initialize string
-        strcpy(filename, "");
-        strcat(filename, APP_SFTP_FILENAME);
-        strcat(filename, current_date_time);
-        strcat(filename, ".txt");
-        TRACE_INFO("Creating File with %s - %s...\r\n", filename,
+        strcpy(temp_filename, "");
+        strcat(temp_filename, APP_SFTP_TEMP_FILENAME);
+        strcat(temp_filename, current_date_time);
+        strcat(temp_filename, ".txt");
+        TRACE_INFO("Creating File with %s - %s...\r\n", temp_filename,
                    ipAddrToString(&ipAddr, NULL));
-        error = sftpClientOpenFile(&sftpClientContext, filename,
+        error = sftpClientOpenFile(&sftpClientContext, temp_filename,
                                    SSH_FXF_CREAT);
         // Any error to report?
         if (error)
@@ -293,10 +294,10 @@ error_list sftpClientTest(void)
 
         osDelayTask(1000);
 
-        TRACE_INFO("Opening File %s - %s...\r\n", filename,
+        TRACE_INFO("Opening File %s - %s...\r\n", temp_filename,
                    ipAddrToString(&ipAddr, NULL));
 
-        error = sftpClientOpenFile(&sftpClientContext, filename,
+        error = sftpClientOpenFile(&sftpClientContext, temp_filename,
                                    SSH_FXF_WRITE);
         // Any error to report?
         if (error)
@@ -327,35 +328,65 @@ error_list sftpClientTest(void)
         */
 
         // Write to file
+        FILE *file;
         size_t write_n;
-        char_t write_buffer[5];
-        write_buffer[0] = 'T';
-        write_buffer[1] = 'E';
-        write_buffer[2] = 'S';
-        write_buffer[3] = 'T';
-        write_buffer[4] = '\n';
+        char write_buffer[256];
 
-        error = sftpClientWriteFile(&sftpClientContext, &write_buffer, sizeof(write_buffer), &write_n, 0);
-        error = sftpClientWriteFile(&sftpClientContext, &write_buffer, sizeof(write_buffer), &write_n, 0);
-        // Any error to report?
-        if (error)
+        // Open the file in read mode
+        file = fopen("/sdcard/log.txt", "r");
+        if (file == NULL)
         {
-            TRACE_INFO("Error while writing to File %s...\r\n",
-                       ipAddrToString(&ipAddr, NULL));
+            printf("Error opening the file.\n");
+            break;
         }
+
+        // Read the file line by line
+        while (fgets(write_buffer, sizeof(write_buffer), file))
+        {
+            error = sftpClientWriteFile(&sftpClientContext, &write_buffer, sizeof(write_buffer), &write_n, 0);
+            // Any error to report?
+            if (error)
+            {
+                TRACE_INFO("Error while writing to File %s...\r\n",
+                           ipAddrToString(&ipAddr, NULL));
+                break;
+            }
+        }
+        // Close the file
+        fclose(file);
 
         // Terminate the string with a line feed
         TRACE_INFO("\r\n");
 
         // Any error to report?
+        /*
         if (error != ERROR_END_OF_STREAM)
             break;
+            */
 
         // Close file
         error = sftpClientCloseFile(&sftpClientContext);
         // Any error to report?
         if (error)
             break;
+
+        // Open the specified file for reading
+        char filename[100];
+        // Initialize string
+        strcpy(filename, "");
+        strcat(filename, APP_SFTP_FILENAME);
+        strcat(filename, current_date_time);
+        strcat(filename, ".txt");
+
+        TRACE_INFO("Renaming File %s to %s...\r\n", temp_filename, filename,
+                   ipAddrToString(&ipAddr, NULL));
+        // error = sftpClientRenameFile(&sftpClientContext, temp_filename, filename);
+        if (error)
+        {
+            TRACE_INFO("Error renaming File %s...\r\n",
+                       ipAddrToString(&ipAddr, NULL));
+            break;
+        }
 
         // Gracefully disconnect from the SFTP server
         sftpClientDisconnect(&sftpClientContext);
@@ -381,19 +412,26 @@ error_list sftpClientTest(void)
 void userTask(void *param)
 {
     osDelayTask(5000);
-    // Endless loop
     while (1)
     {
         // SFTP client test routine
-        sftpClientTest();
+        error_list error = sftpClientTest();
 
-        // Loop delay
-        osDelayTask(1000);
+        if (error)
+        {
+            osDelayTask(1000);
+        }
+        else
+        {
+            break;
+        }
     }
 }
 
 void SSH_INIT()
 {
+    userTask("");
+    /*
     OsTaskId taskId;
     // Create user task
     taskId = osCreateTask("User", userTask, NULL, 750, OS_TASK_PRIORITY_NORMAL);
@@ -403,6 +441,7 @@ void SSH_INIT()
         // Debug message
         TRACE_ERROR("Failed to create task!\r\n");
     }
+    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -573,7 +612,7 @@ void WIFI_INIT()
     GET_DATE_TIME(current_date_time);
 
     // Force disconnecting from SNTP server
-    esp_err_t err = esp_wifi_disconnect();
+    esp_wifi_disconnect();
 
     error_list error;
 
@@ -586,7 +625,7 @@ void WIFI_INIT()
     TRACE_INFO("\r\n");
 
     // Configure I/Os
-    ioInit();
+    // ioInit();
 
     // Initialize NVS memory
     nvs_flash_init();

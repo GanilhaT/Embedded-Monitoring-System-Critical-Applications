@@ -171,22 +171,9 @@ void MOUNT_SD_CARD()
 		}
 		return;
 	}
-	// Check if the file exists
-	if (access(LOG_FILE_PATH, F_OK) == 0)
-	{
-		ESP_LOGI(TAG, "File exists");
-		// Attempt to delete the file
-		if (remove(LOG_FILE_PATH) == 0)
-		{
-			ESP_LOGI(TAG, "File deleted successfully");
-		}
-		else
-		{
-			ESP_LOGE(TAG, "Error deleting the file");
-		}
-	}
+
 	// Set the file stream
-	log_file = fopen(LOG_FILE_PATH, "w");
+	log_file = fopen(LOG_FILE_PATH, "a");
 	if (log_file == NULL)
 	{
 		ESP_LOGE(TAG, "Failed to open file for logging!");
@@ -260,6 +247,8 @@ void CARDIO_LOG(char *TAG, char *message, int level)
  */
 void SEND_LOG_OVER_SSH()
 {
+	fclose(log_file);
+	log_file = NULL;
 	WIFI_INIT();
 	SSH_INIT();
 }

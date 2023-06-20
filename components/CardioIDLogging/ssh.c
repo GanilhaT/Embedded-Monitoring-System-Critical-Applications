@@ -336,7 +336,7 @@ error_list sftpClientTest(void)
         file = fopen("/sdcard/log.txt", "rb");
         if (file == NULL)
         {
-            printf("Error opening the file.\n");
+            TRACE_INFO("Error opening the file.\n");
             break;
         }
 
@@ -386,6 +386,12 @@ error_list sftpClientTest(void)
             TRACE_INFO("Error renaming File %s...\r\n",
                        ipAddrToString(&ipAddr, NULL));
             break;
+        }
+
+        // Attempt to delete the file
+        if (remove("/sdcard/log.txt") == 0)
+        {
+            TRACE_INFO("Log file deleted\n");
         }
 
         // Gracefully disconnect from the SFTP server

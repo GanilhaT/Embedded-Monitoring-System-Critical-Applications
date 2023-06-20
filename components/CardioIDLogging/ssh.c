@@ -330,10 +330,10 @@ error_list sftpClientTest(void)
         // Write to file
         FILE *file;
         size_t write_n;
-        char write_buffer[256];
+        char write_buffer[1024];
 
         // Open the file in read mode
-        file = fopen("/sdcard/log.txt", "r");
+        file = fopen("/sdcard/log.txt", "rb");
         if (file == NULL)
         {
             printf("Error opening the file.\n");

@@ -154,11 +154,11 @@ void GET_DATE_TIME(char *date_time)
     localtime_r(&now, &timeinfo);
 
     // Set timezone
-    setenv("TZ", "UTC+00:00", 1);
+    setenv("TZ", "UTC-01:00", 1);
     tzset();
     localtime_r(&now, &timeinfo);
 
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
     strcpy(date_time, strftime_buf);
 }
 

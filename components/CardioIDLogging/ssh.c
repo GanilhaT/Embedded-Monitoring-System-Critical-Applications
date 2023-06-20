@@ -64,8 +64,8 @@
 #define APP_SFTP_SERVER_PORT 226
 #define APP_SFTP_USERNAME "ganilha"
 #define APP_SFTP_PASSWORD "16121995"
-#define APP_SFTP_TEMP_FILENAME "/home/ganilha/kibana/temp-cardioid-test-"
-#define APP_SFTP_FILENAME "/home/ganilha/kibana/cardioid-test-"
+#define APP_SFTP_TEMP_FILENAME "/home/ganilha/kibana/temp-cardioid "
+#define APP_SFTP_FILENAME "/home/ganilha/kibana/cardioid "
 
 // List of trusted host keys
 const char_t *trustedHostKeys[] =

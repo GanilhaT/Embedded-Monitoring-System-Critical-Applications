@@ -48,26 +48,6 @@ static FILE *log_file;
 #define PIN_NUM_CS 13
 #endif // USE_SPI_MODE
 
-static void READ_FILE()
-{
-	FILE *file;
-	char line[256];
-	// Open the file in read mode
-	file = fopen(LOG_FILE_PATH, "r");
-	if (file == NULL)
-	{
-		printf("Error opening the file.\n");
-	}
-
-	// Read the file line by line
-	while (fgets(line, sizeof(line), file))
-	{
-		printf("%s", line);
-	}
-	// Close the file
-	fclose(file);
-}
-
 /**
  * @brief executed function every time an event is logged
  *
@@ -86,7 +66,15 @@ static int PRINT_TO_SD_CARD(const char *fmt, va_list list)
 	{
 		return -1;
 	}
-	int res = vfprintf(log_file, fmt, list);
+	// Get timestamp
+	char current_date_time[100];
+	GET_DATE_TIME(current_date_time);
+
+	// Construct the modified format string with the prefix
+	char modified_fmt[strlen(current_date_time) + strlen(fmt) + 1];
+	sprintf(modified_fmt, "[%s] %s", current_date_time, fmt);
+
+	int res = vfprintf(log_file, modified_fmt, list);
 	// Committing changes to the file on each write is slower,
 	// but ensures that no data will be lost.
 	// fsync after might be called every 50 log messages or so,
@@ -206,10 +194,8 @@ void CARDIO_LOG(char *TAG, char *message, int level)
 {
 	// char *TAG = (char *)arg;
 	// char *message = "Test";
-	char current_date_time[100];
+
 	int coreId = xPortGetCoreID();
-	// Get timestamp
-	GET_DATE_TIME(current_date_time);
 	// Print the core ID before performing logging
 	printf("Logging task running on Core %d\n", coreId);
 
@@ -249,6 +235,7 @@ void SEND_LOG_OVER_SSH()
 {
 	fclose(log_file);
 	log_file = NULL;
+	esp_log_set_vprintf(&vprintf);
 	WIFI_INIT();
 	SSH_INIT();
 }
@@ -269,6 +256,7 @@ void SEND_LOG_OVER_SSH()
  */
 void CARDIO_LOGGING_INIT()
 {
+	esp_log_level_set("*", ESP_LOG_DEBUG);
 	SNTP_INIT();
 	MOUNT_SD_CARD();
 }

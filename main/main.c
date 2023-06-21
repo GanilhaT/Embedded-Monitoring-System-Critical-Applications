@@ -18,16 +18,11 @@ void app_main(void)
 
 	CARDIO_LOGGING_INIT();
 
-	/*
-
-	while (true)
-	{
-		char *TAG = "MyModule";
-		CARDIO_LOG(TAG, "Test", 0);
-		sleep(20);
-	}
-
-	*/
+	char *TAG = "LOG_TEST";
+	CARDIO_LOG(TAG, "Error Log", 0);
+	CARDIO_LOG(TAG, "Warning Log", 1);
+	CARDIO_LOG(TAG, "Information Log", 2);
+	CARDIO_LOG(TAG, "Debug Log", 3);
 
 	SEND_LOG_OVER_SSH();
 

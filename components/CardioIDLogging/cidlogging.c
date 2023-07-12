@@ -170,7 +170,7 @@ void CHECK_PENDING_LOGS()
 {
 	bool checkLogs = false;
 	DIR *dir;
-	struct dirent *ent;
+	const struct dirent *ent;
 
 	// Open the directory
 	printf("Checking all files \n");
@@ -186,7 +186,7 @@ void CHECK_PENDING_LOGS()
 			}
 		}
 	}
-
+	closedir(dir);
 	if (checkLogs)
 	{
 		WIFI_INIT();

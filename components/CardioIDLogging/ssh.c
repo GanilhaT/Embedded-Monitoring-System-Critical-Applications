@@ -187,8 +187,8 @@ error_list sftpClientTest(void)
             TRACE_INFO("Failed to resolve server name!\r\n");
             break;
         }
-
         // Register SSH initialization callback
+        TRACE_INFO("Register SSH initialization callback \r\n");
         error = sftpClientRegisterSshInitCallback(&sftpClientContext,
                                                   sftpClientSshInitCallback);
         // Any error to report?
@@ -216,17 +216,19 @@ error_list sftpClientTest(void)
             break;
         }
 
-        printf("4 ------------------------------------------------------------------------");
+        TRACE_INFO("Opening log directory\r\n");
 
         DIR *dir;
-        struct dirent *ent;
+        const struct dirent *ent;
 
         // Open the directory
         if ((dir = opendir(LOG_FILE_DIR)) != NULL)
         {
+            TRACE_INFO("Loopping through each file\r\n");
             // Loop through each file
             while ((ent = readdir(dir)) != NULL)
             {
+                TRACE_INFO("Checking if is valid file\r\n");
                 if (ent->d_type == DT_REG && ENDSWITH(ent->d_name, ".txt"))
                 {
                     // Open the specified file for reading
@@ -347,6 +349,7 @@ error_list sftpClientTest(void)
                 }
             }
         }
+        closedir(dir);
 
         // Gracefully disconnect from the SFTP server
         sftpClientDisconnect(&sftpClientContext);

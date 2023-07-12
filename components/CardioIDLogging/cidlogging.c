@@ -9,6 +9,8 @@
 #include "driver/sdmmc_host.h"
 #include "driver/sdspi_host.h"
 #include "sdmmc_cmd.h"
+#include <dirent.h>
+#include <dirent.h>
 
 #include "esp_wifi.h"
 #include "esp_event_loop.h"
@@ -18,8 +20,9 @@
 #include "cidLogging.h"
 #include "ssh.h"
 #include "sntp.h"
+#include "utils.h"
 
-#define LOG_FILE_PATH "/sdcard/log.txt"
+TaskHandle_t loggingTaskHandle = NULL;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,7 +71,7 @@ static int PRINT_TO_SD_CARD(const char *fmt, va_list list)
 	}
 	// Get timestamp
 	char current_date_time[100];
-	GET_DATE_TIME(current_date_time);
+	GET_DATE_TIME(current_date_time, false);
 
 	// Construct the modified format string with the prefix
 	char modified_fmt[strlen(current_date_time) + strlen(fmt) + 1];
@@ -142,7 +145,7 @@ void MOUNT_SD_CARD()
 	// Please check its source code and implement error recovery when developing
 	// production applications.
 	sdmmc_card_t *card;
-	esp_err_t ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
+	esp_err_t ret = esp_vfs_fat_sdmmc_mount(LOG_FILE_DIR, &host, &slot_config, &mount_config, &card);
 
 	if (ret != ESP_OK)
 	{
@@ -159,20 +162,66 @@ void MOUNT_SD_CARD()
 		}
 		return;
 	}
+	// Card has been initialized, print its properties
+	sdmmc_card_print_info(stdout, card);
+}
 
+void CHECK_PENDING_LOGS()
+{
+	bool checkLogs = false;
+	DIR *dir;
+	struct dirent *ent;
+
+	// Open the directory
+	printf("Checking all files \n");
+	if ((dir = opendir(LOG_FILE_DIR)) != NULL)
+	{
+		// Loop through each file
+		while ((ent = readdir(dir)) != NULL)
+		{
+			if (ent->d_type == DT_REG && ENDSWITH(ent->d_name, ".txt"))
+			{
+				checkLogs = true;
+				break;
+			}
+		}
+	}
+
+	if (checkLogs)
+	{
+		WIFI_INIT();
+		SSH_INIT();
+	}
+}
+
+/*
+ */
+void CREATE_LOG_FILE()
+{
+	char *TAG = "LOGFILE";
+	// Open the specified file for reading
+	char filename[100];
+	// Initialize string
+	strcpy(filename, "");
+	strcat(filename, LOG_FILE_DIR);
+	strcat(filename, "/cardioid-");
+	// Get timestamp to be used to create the file
+	char current_date_time[100];
+	GET_DATE_TIME(current_date_time, true);
+	strcat(filename, current_date_time);
+	strcat(filename, ".txt");
 	// Set the file stream
-	log_file = fopen(LOG_FILE_PATH, "a");
+	log_file = fopen(filename, "a");
 	if (log_file == NULL)
 	{
-		ESP_LOGE(TAG, "Failed to open file for logging!");
+		ESP_LOGE(TAG, "Failed to open file %s for logging! Error code: %d", filename, errno);
 	}
 	else
 	{
+		ESP_LOGI(TAG, "File %s opened", filename);
 		ESP_LOGI(TAG, "Redirecting log output to SD card!");
 		esp_log_set_vprintf(PRINT_TO_SD_CARD);
 	}
-	// Card has been initialized, print its properties
-	sdmmc_card_print_info(stdout, card);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -236,15 +285,30 @@ void SEND_LOG_OVER_SSH()
 	fclose(log_file);
 	log_file = NULL;
 	esp_log_set_vprintf(&vprintf);
-	WIFI_INIT();
-	SSH_INIT();
+	// vTaskDelete(loggingTaskHandle);
+	// WIFI_INIT();
+	// SSH_INIT();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////// MAIN /////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////// INIT /////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void LOGGING_TASK(void *arg)
+{
+	while (1)
+	{
+		// Task logic here
+		char *TAG = "LOG_TASK_TEST";
+		CARDIO_LOG(TAG, "Error Log", 0);
+		CARDIO_LOG(TAG, "Warning Log", 1);
+		CARDIO_LOG(TAG, "Information Log", 2);
+		CARDIO_LOG(TAG, "Debug Log", 3);
+		vTaskDelay(pdMS_TO_TICKS(10000)); // Delay for 10 seconds
+	}
+}
 
 /**
  * @brief Initialization of the logging system
@@ -257,6 +321,10 @@ void SEND_LOG_OVER_SSH()
 void CARDIO_LOGGING_INIT()
 {
 	esp_log_level_set("*", ESP_LOG_DEBUG);
-	SNTP_INIT();
 	MOUNT_SD_CARD();
+	CHECK_PENDING_LOGS();
+	SNTP_INIT();
+	CREATE_LOG_FILE();
+	// Create the task
+	xTaskCreatePinnedToCore(LOGGING_TASK, "LOGGING_TASK", 4096, NULL, 10, &loggingTaskHandle, 1);
 }

@@ -15,6 +15,7 @@
         "yarrow.h": "c",
         "crypto.h": "c",
         "esp32_wifi_driver.h": "c",
-        "sntp_client.h": "c"
+        "sntp_client.h": "c",
+        "sntp.h": "c"
     }
 }

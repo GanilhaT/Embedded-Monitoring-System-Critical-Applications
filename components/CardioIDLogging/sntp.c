@@ -1,5 +1,4 @@
 // SNTP
-
 #include <time.h>
 #include <sys/time.h>
 #include "esp_attr.h"
@@ -20,8 +19,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#define EXAMPLE_ESP_WIFI_SSID "NOS_Internet_Movel_D996"
-#define EXAMPLE_ESP_WIFI_PASS "n98e3854"
+#include "utils.h"
 
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -69,7 +67,7 @@ void wifi_init_sta(void)
 
     ESP_ERROR_CHECK(esp_netif_init());
 
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    esp_event_loop_create_default();
     esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -96,8 +94,8 @@ void wifi_init_sta(void)
 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .password = EXAMPLE_ESP_WIFI_PASS,
+            .ssid = APP_WIFI_STA_SSID,
+            .password = APP_WIFI_STA_PASSWORD,
             /* Setting a password implies station will connect to all security modes including WEP/WPA.
              * However these modes are deprecated and not advisable to be used. Incase your Access point
              * doesn't support WPA2, these mode can be enabled by commenting below line */
@@ -127,12 +125,12 @@ void wifi_init_sta(void)
     if (bits & WIFI_CONNECTED_BIT)
     {
         ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 APP_WIFI_STA_SSID, APP_WIFI_STA_PASSWORD);
     }
     else if (bits & WIFI_FAIL_BIT)
     {
         ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 APP_WIFI_STA_SSID, APP_WIFI_STA_PASSWORD);
     }
     else
     {
@@ -145,7 +143,7 @@ void wifi_init_sta(void)
     vEventGroupDelete(s_wifi_event_group);
 }
 
-void GET_DATE_TIME(char *date_time)
+void GET_DATE_TIME(char *date_time, bool is_filename)
 {
     char strftime_buf[64];
     time_t now;
@@ -158,7 +156,14 @@ void GET_DATE_TIME(char *date_time)
     tzset();
     localtime_r(&now, &timeinfo);
 
-    strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+    if (is_filename)
+    {
+        strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%d %H_%M_%S", &timeinfo);
+    }
+    else
+    {
+        strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+    }
     strcpy(date_time, strftime_buf);
 }
 
@@ -211,6 +216,8 @@ void Set_SystemTime_SNTP()
 
 void SNTP_INIT(void)
 {
+    // Force disconnection
+    wifi_reset_config();
 
     // Initialize NVS
     esp_err_t ret = nvs_flash_init();

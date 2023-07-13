@@ -2,9 +2,10 @@ set(srcs
   cidLogging.c
   ssh.c
   sntp.c
+  utils.c
 )
 
-idf_component_register(SRCS "sntp.c" "ssh.c" "cidlogging.c" "${srcs}"
+idf_component_register(SRCS "utils.c" "sntp.c" "ssh.c" "cidlogging.c" "${srcs}"
                     INCLUDE_DIRS include cyclone/common cyclone/cyclone_tcp cyclone/cyclone_ssh cyclone/cyclone_crypto
                     REQUIRES cmock vfs fatfs nvs_flash)
 

@@ -13,59 +13,10 @@
 #include "rng/trng.h"
 #include "rng/yarrow.h"
 #include "debug.h"
+#include <dirent.h>
 
 #include "sntp.h"
-
-// First Wi-Fi interface (STA mode) configuration
-#define APP_IF0_NAME "wlan0"
-#define APP_IF0_HOST_NAME "sftp-client-demo"
-#define APP_IF0_MAC_ADDR "00-00-00-00-00-00"
-
-#define APP_IF0_USE_DHCP_CLIENT ENABLED
-#define APP_IF0_IPV4_HOST_ADDR "192.168.0.20"
-#define APP_IF0_IPV4_SUBNET_MASK "255.255.255.0"
-#define APP_IF0_IPV4_DEFAULT_GATEWAY "192.168.0.254"
-#define APP_IF0_IPV4_PRIMARY_DNS "8.8.8.8"
-#define APP_IF0_IPV4_SECONDARY_DNS "8.8.4.4"
-
-#define APP_IF0_USE_SLAAC ENABLED
-#define APP_IF0_IPV6_LINK_LOCAL_ADDR "fe80::32:1"
-
-// Second Wi-Fi interface (AP mode) configuration
-#define APP_IF1_NAME "wlan1"
-#define APP_IF1_HOST_NAME "sftp-client-demo"
-#define APP_IF1_MAC_ADDR "00-00-00-00-00-00"
-
-#define APP_IF1_USE_DHCP_SERVER ENABLED
-#define APP_IF1_IPV4_HOST_ADDR "192.168.8.1"
-#define APP_IF1_IPV4_SUBNET_MASK "255.255.255.0"
-#define APP_IF1_IPV4_DEFAULT_GATEWAY "0.0.0.0"
-#define APP_IF1_IPV4_PRIMARY_DNS "0.0.0.0"
-#define APP_IF1_IPV4_SECONDARY_DNS "0.0.0.0"
-#define APP_IF1_IPV4_ADDR_RANGE_MIN "192.168.8.10"
-#define APP_IF1_IPV4_ADDR_RANGE_MAX "192.168.8.99"
-
-#define APP_IF1_USE_ROUTER_ADV ENABLED
-#define APP_IF1_IPV6_LINK_LOCAL_ADDR "fe80::32:2"
-#define APP_IF1_IPV6_PREFIX "fd00:1:2:3::"
-#define APP_IF1_IPV6_PREFIX_LENGTH 64
-#define APP_IF1_IPV6_GLOBAL_ADDR "fd00:1:2:3::32:2"
-
-// Wi-Fi parameters (STA mode)
-#define APP_WIFI_STA_SSID "NOS_Internet_Movel_D996"
-#define APP_WIFI_STA_PASSWORD "n98e3854"
-
-// Wi-Fi parameters (AP mode)
-#define APP_WIFI_AP_SSID "NOS_Internet_Movel_D996"
-#define APP_WIFI_AP_PASSWORD "n98e3854"
-
-// Application configuration
-#define APP_SFTP_SERVER_NAME "79.169.196.72"
-#define APP_SFTP_SERVER_PORT 226
-#define APP_SFTP_USERNAME "ganilha"
-#define APP_SFTP_PASSWORD "16121995"
-#define APP_SFTP_TEMP_FILENAME "/home/ganilha/kibana/temp-cardioid "
-#define APP_SFTP_FILENAME "/home/ganilha/kibana/cardioid "
+#include "utils.h"
 
 // List of trusted host keys
 const char_t *trustedHostKeys[] =
@@ -102,8 +53,6 @@ esp_err_t wifiEnableAp(void);
 
 void wifiEventHandler(void *arg, esp_event_base_t eventBase,
                       int32_t eventId, void *eventData);
-
-char current_date_time[100];
 
 /**
  * @brief I/O initialization
@@ -238,8 +187,8 @@ error_list sftpClientTest(void)
             TRACE_INFO("Failed to resolve server name!\r\n");
             break;
         }
-
         // Register SSH initialization callback
+        TRACE_INFO("Register SSH initialization callback \r\n");
         error = sftpClientRegisterSshInitCallback(&sftpClientContext,
                                                   sftpClientSshInitCallback);
         // Any error to report?
@@ -267,132 +216,137 @@ error_list sftpClientTest(void)
             break;
         }
 
-        // Open the specified file for reading
-        char temp_filename[100];
-        // Initialize string
-        strcpy(temp_filename, "");
-        strcat(temp_filename, APP_SFTP_TEMP_FILENAME);
-        strcat(temp_filename, current_date_time);
-        strcat(temp_filename, ".txt");
-        TRACE_INFO("Creating File with %s - %s...\r\n", temp_filename,
-                   ipAddrToString(&ipAddr, NULL));
-        error = sftpClientOpenFile(&sftpClientContext, temp_filename,
-                                   SSH_FXF_CREAT);
-        // Any error to report?
-        if (error)
+        TRACE_INFO("Opening log directory\r\n");
+
+        DIR *dir;
+        const struct dirent *ent;
+
+        // Open the directory
+        if ((dir = opendir(LOG_FILE_DIR)) != NULL)
         {
-            TRACE_INFO("Error while opening File %s...\r\n",
-                       ipAddrToString(&ipAddr, NULL));
-            break;
-        }
-
-        // Close file
-        error = sftpClientCloseFile(&sftpClientContext);
-        // Any error to report?
-        if (error)
-            break;
-
-        sleep(1000);
-
-        TRACE_INFO("Opening File %s - %s...\r\n", temp_filename,
-                   ipAddrToString(&ipAddr, NULL));
-
-        error = sftpClientOpenFile(&sftpClientContext, temp_filename,
-                                   SSH_FXF_WRITE);
-        // Any error to report?
-        if (error)
-        {
-            TRACE_INFO("Error while opening File %s...\r\n",
-                       ipAddrToString(&ipAddr, NULL));
-            break;
-        }
-        /*
-        // Read the contents of the file
-        size_t n;
-        char_t read_buffer[128];
-        while (!error)
-        {
-            // Read data
-            error = sftpClientReadFile(&sftpClientContext, read_buffer,
-                                       sizeof(read_buffer) - 1, &n, 0);
-
-            // Check status code
-            if (!error)
+            TRACE_INFO("Loopping through each file\r\n");
+            while ((ent = readdir(dir)) != NULL)
             {
-                // Properly terminate the string with a NULL character
-                read_buffer[n] = '\0';
-                // Dump the contents of the file
-                TRACE_INFO("%s", read_buffer);
+                if (ent->d_type == DT_REG && ENDSWITH(ent->d_name, ".txt"))
+                {
+                    char temp_filename[100];
+                    // Initialize string
+                    strcpy(temp_filename, "");
+                    strcat(temp_filename, APP_SFTP_TEMP_FILENAME);
+                    strcat(temp_filename, ent->d_name);
+                    TRACE_INFO("Creating File with %s - %s...\r\n", temp_filename,
+                               ipAddrToString(&ipAddr, NULL));
+                    error = sftpClientOpenFile(&sftpClientContext, temp_filename,
+                                               SSH_FXF_CREAT);
+                    // Any error to report?
+                    if (error)
+                    {
+                        TRACE_INFO("Error while opening File %s...\r\n",
+                                   ipAddrToString(&ipAddr, NULL));
+                        break;
+                    }
+
+                    // Close file
+                    error = sftpClientCloseFile(&sftpClientContext);
+                    // Any error to report?
+                    if (error)
+                    {
+                        TRACE_INFO("Error while closing File %s...\r\n",
+                                   ipAddrToString(&ipAddr, NULL));
+                        break;
+                    }
+
+                    // sleep(1000);
+
+                    TRACE_INFO("Opening File %s - %s...\r\n", temp_filename,
+                               ipAddrToString(&ipAddr, NULL));
+
+                    error = sftpClientOpenFile(&sftpClientContext, temp_filename,
+                                               SSH_FXF_WRITE);
+                    // Any error to report?
+                    if (error)
+                    {
+                        TRACE_INFO("Error while opening File %s...\r\n",
+                                   ipAddrToString(&ipAddr, NULL));
+                        break;
+                    }
+
+                    // Write to file
+                    FILE *file;
+                    size_t write_n;
+                    char write_buffer[1024];
+
+                    char logfilepath[1024];
+                    snprintf(logfilepath, sizeof(logfilepath), "%s/%s", LOG_FILE_DIR, ent->d_name);
+                    file = fopen(logfilepath, "rb");
+                    if (file == NULL)
+                    {
+                        TRACE_INFO("Error opening the local file %s \n", logfilepath);
+                        break;
+                    }
+
+                    // Read the file line by line
+                    while (fgets(write_buffer, sizeof(write_buffer), file))
+                    {
+                        error = sftpClientWriteFile(&sftpClientContext, &write_buffer, strlen(write_buffer), &write_n, 0);
+                        // Any error to report?
+                        if (error)
+                        {
+                            TRACE_INFO("Error while writing to File %s...\r\n",
+                                       ipAddrToString(&ipAddr, NULL));
+                            break;
+                        }
+                    }
+                    // Close the file
+                    fclose(file);
+
+                    // Terminate the string with a line feed
+                    TRACE_INFO("\r\n");
+
+                    // Close file
+                    error = sftpClientCloseFile(&sftpClientContext);
+                    // Any error to report?
+                    if (error)
+                    {
+                        TRACE_INFO("Error while closing File %s...\r\n",
+                                   ipAddrToString(&ipAddr, NULL));
+                        break;
+                    }
+
+                    // Open the specified file for reading
+                    char filename[100];
+                    // Initialize string
+                    strcpy(filename, "");
+                    strcat(filename, APP_SFTP_FILENAME);
+                    strcat(filename, ent->d_name);
+
+                    TRACE_INFO("Renaming File %s to %s...\r\n", temp_filename, filename,
+                               ipAddrToString(&ipAddr, NULL));
+                    error = sftpClientRenameFile(&sftpClientContext, temp_filename, filename);
+                    if (error)
+                    {
+                        TRACE_INFO("Error renaming File %s...\r\n",
+                                   ipAddrToString(&ipAddr, NULL));
+                        break;
+                    }
+
+                    // Attempt to delete the file
+                    strcpy(filename, "");
+                    strcat(filename, LOG_FILE_DIR);
+                    strcat(filename, "/");
+                    strcat(filename, ent->d_name);
+                    if (remove(filename) == 0)
+                    {
+                        TRACE_INFO("Log file deleted %s \n", filename);
+                    }
+                    else
+                    {
+                        TRACE_INFO("Failed to delete file %s \n", filename);
+                    }
+                }
             }
         }
-        */
-
-        // Write to file
-        FILE *file;
-        size_t write_n;
-        char write_buffer[1024];
-
-        // Open the file in read mode
-        file = fopen("/sdcard/log.txt", "rb");
-        if (file == NULL)
-        {
-            TRACE_INFO("Error opening the file.\n");
-            break;
-        }
-
-        // Read the file line by line
-        while (fgets(write_buffer, sizeof(write_buffer), file))
-        {
-            error = sftpClientWriteFile(&sftpClientContext, &write_buffer, strlen(write_buffer), &write_n, 0);
-            // Any error to report?
-            if (error)
-            {
-                TRACE_INFO("Error while writing to File %s...\r\n",
-                           ipAddrToString(&ipAddr, NULL));
-                break;
-            }
-        }
-        // Close the file
-        fclose(file);
-
-        // Terminate the string with a line feed
-        TRACE_INFO("\r\n");
-
-        // Any error to report?
-        /*
-        if (error != ERROR_END_OF_STREAM)
-            break;
-            */
-
-        // Close file
-        error = sftpClientCloseFile(&sftpClientContext);
-        // Any error to report?
-        if (error)
-            break;
-
-        // Open the specified file for reading
-        char filename[100];
-        // Initialize string
-        strcpy(filename, "");
-        strcat(filename, APP_SFTP_FILENAME);
-        strcat(filename, current_date_time);
-        strcat(filename, ".txt");
-
-        TRACE_INFO("Renaming File %s to %s...\r\n", temp_filename, filename,
-                   ipAddrToString(&ipAddr, NULL));
-        error = sftpClientRenameFile(&sftpClientContext, temp_filename, filename);
-        if (error)
-        {
-            TRACE_INFO("Error renaming File %s...\r\n",
-                       ipAddrToString(&ipAddr, NULL));
-            break;
-        }
-
-        // Attempt to delete the file
-        if (remove("/sdcard/log.txt") == 0)
-        {
-            TRACE_INFO("Log file deleted\n");
-        }
+        closedir(dir);
 
         // Gracefully disconnect from the SFTP server
         sftpClientDisconnect(&sftpClientContext);
@@ -411,12 +365,22 @@ error_list sftpClientTest(void)
 }
 
 /**
- * @brief User task
- * @param[in] param Unused parameter
+ * @brief SSH INIT
  **/
-
-void userTask(void *param)
+void SSH_INIT()
 {
+    /*
+    OsTaskId taskId;
+    // Create user task
+    taskId = osCreateTask("User", userTask, NULL, 750, OS_TASK_PRIORITY_NORMAL);
+    // Failed to create the task?
+    if (taskId == OS_INVALID_TASK_ID)
+    {
+        // Debug message
+        TRACE_ERROR("Failed to create task!\r\n");
+    }
+    */
+
     osDelayTask(5000);
     while (1)
     {
@@ -432,22 +396,11 @@ void userTask(void *param)
             break;
         }
     }
-}
 
-void SSH_INIT()
-{
-    userTask("");
-    /*
-    OsTaskId taskId;
-    // Create user task
-    taskId = osCreateTask("User", userTask, NULL, 750, OS_TASK_PRIORITY_NORMAL);
-    // Failed to create the task?
-    if (taskId == OS_INVALID_TASK_ID)
-    {
-        // Debug message
-        TRACE_ERROR("Failed to create task!\r\n");
-    }
-    */
+    dhcpClientRelease(&dhcpClientContext);
+    dhcpClientRelease(&dhcpServerContext);
+    netStopInterface(&netInterface[0]);
+    netStopInterface(&netInterface[1]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -614,11 +567,8 @@ void wifiEventHandler(void *arg, esp_event_base_t eventBase,
 
 void WIFI_INIT()
 {
-    // Get timestamp to be used to create the file
-    GET_DATE_TIME(current_date_time);
-
-    // Force disconnecting from SNTP server
-    esp_wifi_disconnect();
+    // Force disconnection
+    wifi_reset_config();
 
     error_list error;
 
@@ -690,7 +640,6 @@ void WIFI_INIT()
 
     // Configure the first network interface (Wi-Fi STA mode)
     wifiStaInterfaceInit();
-
     // Configure the second network interface (Wi-Fi AP mode)
     wifiApInterfaceInit();
 

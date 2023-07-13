@@ -166,34 +166,6 @@ void MOUNT_SD_CARD()
 	sdmmc_card_print_info(stdout, card);
 }
 
-void CHECK_PENDING_LOGS()
-{
-	bool checkLogs = false;
-	DIR *dir;
-	const struct dirent *ent;
-
-	// Open the directory
-	printf("Checking all files \n");
-	if ((dir = opendir(LOG_FILE_DIR)) != NULL)
-	{
-		// Loop through each file
-		while ((ent = readdir(dir)) != NULL)
-		{
-			if (ent->d_type == DT_REG && ENDSWITH(ent->d_name, ".txt"))
-			{
-				checkLogs = true;
-				break;
-			}
-		}
-	}
-	closedir(dir);
-	if (checkLogs)
-	{
-		WIFI_INIT();
-		SSH_INIT();
-	}
-}
-
 /*
  */
 void CREATE_LOG_FILE()
@@ -286,8 +258,8 @@ void SEND_LOG_OVER_SSH()
 	log_file = NULL;
 	esp_log_set_vprintf(&vprintf);
 	// vTaskDelete(loggingTaskHandle);
-	// WIFI_INIT();
-	// SSH_INIT();
+	WIFI_INIT();
+	SSH_INIT();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -322,7 +294,34 @@ void CARDIO_LOGGING_INIT()
 {
 	esp_log_level_set("*", ESP_LOG_DEBUG);
 	MOUNT_SD_CARD();
-	CHECK_PENDING_LOGS();
+
+	/*
+	bool checkLogs = false;
+	DIR *dir;
+	const struct dirent *ent;
+
+	// Open the directory
+	printf("Checking all files \n");
+	if ((dir = opendir(LOG_FILE_DIR)) != NULL)
+	{
+		// Loop through each file
+		while ((ent = readdir(dir)) != NULL)
+		{
+			if (ent->d_type == DT_REG && ENDSWITH(ent->d_name, ".txt"))
+			{
+				checkLogs = true;
+				break;
+			}
+		}
+	}
+	closedir(dir);
+	if (checkLogs)
+	{
+		WIFI_INIT();
+		SSH_INIT();
+	}
+	*/
+
 	SNTP_INIT();
 	CREATE_LOG_FILE();
 	// Create the task

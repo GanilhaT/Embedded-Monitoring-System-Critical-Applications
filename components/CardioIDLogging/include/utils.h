@@ -51,3 +51,5 @@
 #define LOG_FILE_DIR "/sdcard"
 
 int ENDSWITH(const char *str, const char *suffix);
+
+esp_err_t wifi_reset_config();

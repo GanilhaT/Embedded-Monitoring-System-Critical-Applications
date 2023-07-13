@@ -225,13 +225,10 @@ error_list sftpClientTest(void)
         if ((dir = opendir(LOG_FILE_DIR)) != NULL)
         {
             TRACE_INFO("Loopping through each file\r\n");
-            // Loop through each file
             while ((ent = readdir(dir)) != NULL)
             {
-                TRACE_INFO("Checking if is valid file\r\n");
                 if (ent->d_type == DT_REG && ENDSWITH(ent->d_name, ".txt"))
                 {
-                    // Open the specified file for reading
                     char temp_filename[100];
                     // Initialize string
                     strcpy(temp_filename, "");
@@ -368,12 +365,22 @@ error_list sftpClientTest(void)
 }
 
 /**
- * @brief User task
- * @param[in] param Unused parameter
+ * @brief SSH INIT
  **/
-
-void userTask(void *param)
+void SSH_INIT()
 {
+    /*
+    OsTaskId taskId;
+    // Create user task
+    taskId = osCreateTask("User", userTask, NULL, 750, OS_TASK_PRIORITY_NORMAL);
+    // Failed to create the task?
+    if (taskId == OS_INVALID_TASK_ID)
+    {
+        // Debug message
+        TRACE_ERROR("Failed to create task!\r\n");
+    }
+    */
+
     osDelayTask(5000);
     while (1)
     {
@@ -389,22 +396,11 @@ void userTask(void *param)
             break;
         }
     }
-}
 
-void SSH_INIT()
-{
-    userTask("");
-    /*
-    OsTaskId taskId;
-    // Create user task
-    taskId = osCreateTask("User", userTask, NULL, 750, OS_TASK_PRIORITY_NORMAL);
-    // Failed to create the task?
-    if (taskId == OS_INVALID_TASK_ID)
-    {
-        // Debug message
-        TRACE_ERROR("Failed to create task!\r\n");
-    }
-    */
+    dhcpClientRelease(&dhcpClientContext);
+    dhcpClientRelease(&dhcpServerContext);
+    netStopInterface(&netInterface[0]);
+    netStopInterface(&netInterface[1]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -571,8 +567,8 @@ void wifiEventHandler(void *arg, esp_event_base_t eventBase,
 
 void WIFI_INIT()
 {
-    // Force disconnecting from SNTP server
-    esp_wifi_disconnect();
+    // Force disconnection
+    wifi_reset_config();
 
     error_list error;
 
@@ -644,7 +640,6 @@ void WIFI_INIT()
 
     // Configure the first network interface (Wi-Fi STA mode)
     wifiStaInterfaceInit();
-
     // Configure the second network interface (Wi-Fi AP mode)
     wifiApInterfaceInit();
 

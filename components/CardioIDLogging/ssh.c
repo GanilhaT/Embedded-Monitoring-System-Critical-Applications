@@ -56,8 +56,8 @@ void wifiEventHandler(void *arg, esp_event_base_t eventBase,
 
 /**
  * @brief I/O initialization
- **/
-
+ *
+ */
 void ioInit(void)
 {
     // Configure red LED (GPIO0)
@@ -84,12 +84,14 @@ void ioInit(void)
 
 /**
  * @brief Server's host key verification callback
+ *
  * @param[in] connection Pointer to the SSH connection
  * @param[in] hostKey Pointer to the server's host key
  * @param[in] hostKeyLen Length of the host key, in bytes
+ *
  * @return Error code
- **/
-
+ *
+ */
 error_list sftpClientHostKeyVerifyCallback(SshConnection *connection,
                                            const uint8_t *hostKey, size_t hostKeyLen)
 {
@@ -116,11 +118,13 @@ error_list sftpClientHostKeyVerifyCallback(SshConnection *connection,
 
 /**
  * @brief SSH initialization callback
+ *
  * @param[in] context Pointer to the SFTP client context
  * @param[in] sshContext Pointer to the SSH context
+ *
  * @return Error code
- **/
-
+ *
+ */
 error_list sftpClientSshInitCallback(SftpClientContext *context,
                                      SshContext *sshContext)
 {
@@ -161,9 +165,12 @@ error_list sftpClientSshInitCallback(SftpClientContext *context,
 
 /**
  * @brief SFTP client test routine
+ *
+ * @note -
+ *
  * @return Error code
- **/
-
+ *
+ */
 error_list sftpClientTest(void)
 {
     error_list error;
@@ -366,7 +373,10 @@ error_list sftpClientTest(void)
 
 /**
  * @brief SSH INIT
- **/
+ *
+ * @note -
+ *
+ */
 void SSH_INIT()
 {
     /*
@@ -410,10 +420,13 @@ void SSH_INIT()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief Connect to Wi-Fi network (STA mode)
+ * @brief Create Wi-Fi network (STA mode)
+ *
+ * @note -
+ *
  * @return Error code
- **/
-
+ *
+ */
 esp_err_t wifiConnect(void)
 {
     esp_err_t ret;
@@ -452,9 +465,12 @@ esp_err_t wifiConnect(void)
 
 /**
  * @brief Create Wi-Fi network (AP mode)
+ *
+ * @note -
+ *
  * @return Error code
- **/
-
+ *
+ */
 esp_err_t wifiEnableAp(void)
 {
     esp_err_t ret;
@@ -495,12 +511,15 @@ esp_err_t wifiEnableAp(void)
 
 /**
  * @brief Wi-Fi event handler
+ *
+ * @note -
+ *
  * @param[in] arg User-specific parameter
  * @param[in] eventBase Event base
  * @param[in] eventId Event identifier
  * @param[in] eventData Event-specific data
- **/
-
+ *
+ */
 void wifiEventHandler(void *arg, esp_event_base_t eventBase,
                       int32_t eventId, void *eventData)
 {
@@ -565,10 +584,16 @@ void wifiEventHandler(void *arg, esp_event_base_t eventBase,
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief -
+ *
+ * @note -
+ *
+ */
 void WIFI_INIT()
 {
     // Force disconnection
-    wifi_reset_config();
+    RESET_WIFI();
 
     error_list error;
 
@@ -655,8 +680,10 @@ void WIFI_INIT()
 
 /**
  * @brief Wi-Fi STA interface initialization
- **/
-
+ *
+ * @note -
+ *
+ */
 error_list wifiStaInterfaceInit(void)
 {
     error_list error;
@@ -785,8 +812,10 @@ error_list wifiStaInterfaceInit(void)
 
 /**
  * @brief Wi-Fi AP interface initialization
- **/
-
+ *
+ * @note -
+ *
+ */
 error_list wifiApInterfaceInit(void)
 {
     error_list error;

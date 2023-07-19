@@ -52,17 +52,16 @@ static FILE *log_file;
 #endif // USE_SPI_MODE
 
 /**
- * @brief executed function every time an event is logged
+ * @brief Executed function every time an event is logged.
+ * The list of arguments is added to a new line on the file.
+ * The date time will also be added is a correct connection was established with the SNTP server.
  *
- * @note TBD
+ * @note -
  *
- * @see TBD
- *
- * @param  fmt 		TBD
- * @param  list 	TBD
+ * @param  fmt 		Format specifier (like %s)
+ * @param  list 	List of arguments
  *
  */
-
 static int PRINT_TO_SD_CARD(const char *fmt, va_list list)
 {
 	if (log_file == NULL)
@@ -84,16 +83,14 @@ static int PRINT_TO_SD_CARD(const char *fmt, va_list list)
 	// or after 100ms passed since last fsync, and so on.
 	fsync(fileno(log_file));
 
-	// READ_FILE();
 	return res;
 }
 
 /**
- * @brief function to initialize the SD card and redirect the logging output to a file
+ * @brief Initializes the SD card
  *
- * @note TBD
+ * @note https://gist.github.com/igrr/82055d824cbbc521932f32217e0710b9
  *
- * @see TBD
  */
 void MOUNT_SD_CARD()
 {
@@ -166,7 +163,11 @@ void MOUNT_SD_CARD()
 	sdmmc_card_print_info(stdout, card);
 }
 
-/*
+/**
+ * @brief  Creates a new file with the format cardioid - timestamp and redirects the esp logging output to the created file
+ *
+ * @note -
+ *
  */
 void CREATE_LOG_FILE()
 {
@@ -203,23 +204,17 @@ void CREATE_LOG_FILE()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief sample function to infinitly generate logs
+ * @brief Core function of the logging system. Uses the default esp logging library to create a log statement.
  *
- * @note TBD
+ * @note -
  *
- * @see TBD
+ * @param TAG context of the log event
+ * @param message content of the log event
+ * @param level type of log event to generate (Error, Warning, Information, Debug)
  *
- * @param arg text to pass to the log message
  */
 void CARDIO_LOG(char *TAG, char *message, int level)
 {
-	// char *TAG = (char *)arg;
-	// char *message = "Test";
-
-	int coreId = xPortGetCoreID();
-	// Print the core ID before performing logging
-	printf("Logging task running on Core %d\n", coreId);
-
 	if (level == 0)
 	{
 		ESP_LOGE(TAG, "%s", message);
@@ -232,9 +227,13 @@ void CARDIO_LOG(char *TAG, char *message, int level)
 	{
 		ESP_LOGI(TAG, "%s", message);
 	}
-	else
+	else if (level == 3)
 	{
 		ESP_LOGD(TAG, "%s", message);
+	}
+	else
+	{
+		ESP_LOGV(TAG, "%s", message);
 	}
 }
 
@@ -245,11 +244,9 @@ void CARDIO_LOG(char *TAG, char *message, int level)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief Task to prepare wifi connection and send the log file via TLS connection
+ * @brief Function to prepare the wifi connection and send to send the current log file (and other pending log files) via an SSH connection to an SFTP server
  *
- * @note TBD
- *
- * @see TBD
+ * @note -
  *
  */
 void SEND_LOG_OVER_SSH()
@@ -257,7 +254,8 @@ void SEND_LOG_OVER_SSH()
 	fclose(log_file);
 	log_file = NULL;
 	esp_log_set_vprintf(&vprintf);
-	// vTaskDelete(loggingTaskHandle);
+	// Delete the logging task
+	vTaskDelete(loggingTaskHandle);
 	WIFI_INIT();
 	SSH_INIT();
 }
@@ -268,8 +266,19 @@ void SEND_LOG_OVER_SSH()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief Logging task. Recurrent information to be logged should be defined here. The task will run on one of the cores only.
+ *
+ * @note -
+ *
+ * @param args Arguments passed to the task
+ *
+ */
 void LOGGING_TASK(void *arg)
 {
+	int coreId = xPortGetCoreID();
+	// Print the core ID before performing logging
+	printf("Logging task running on Core %d\n", coreId);
 	while (1)
 	{
 		// Task logic here
@@ -278,52 +287,32 @@ void LOGGING_TASK(void *arg)
 		CARDIO_LOG(TAG, "Warning Log", 1);
 		CARDIO_LOG(TAG, "Information Log", 2);
 		CARDIO_LOG(TAG, "Debug Log", 3);
+		CARDIO_LOG(TAG, "Verbose Log", 4);
 		vTaskDelay(pdMS_TO_TICKS(10000)); // Delay for 10 seconds
 	}
 }
 
 /**
- * @brief Initialization of the logging system
+ * @brief Initialization of the logging system. Includes:
+ * Definition of the log level;
+ * Mounting of the SD Card;
+ * SNTP initialization;
+ * LOG File creation and Log event redirection
+ * Logging task creation.
  *
- * @note TBD
+ * @note -
  *
- * @see TBD
+ * @param level Log level to be configured with
  *
  */
 void CARDIO_LOGGING_INIT()
 {
-	esp_log_level_set("*", ESP_LOG_DEBUG);
+	// MONITOR_SYSTEM();
+	esp_log_level_set("*", ESP_LOG_VERBOSE);
 	MOUNT_SD_CARD();
-
-	/*
-	bool checkLogs = false;
-	DIR *dir;
-	const struct dirent *ent;
-
-	// Open the directory
-	printf("Checking all files \n");
-	if ((dir = opendir(LOG_FILE_DIR)) != NULL)
-	{
-		// Loop through each file
-		while ((ent = readdir(dir)) != NULL)
-		{
-			if (ent->d_type == DT_REG && ENDSWITH(ent->d_name, ".txt"))
-			{
-				checkLogs = true;
-				break;
-			}
-		}
-	}
-	closedir(dir);
-	if (checkLogs)
-	{
-		WIFI_INIT();
-		SSH_INIT();
-	}
-	*/
-
 	SNTP_INIT();
 	CREATE_LOG_FILE();
-	// Create the task
+	// Create the logging task
 	xTaskCreatePinnedToCore(LOGGING_TASK, "LOGGING_TASK", 4096, NULL, 10, &loggingTaskHandle, 1);
+	// MONITOR_SYSTEM();
 }

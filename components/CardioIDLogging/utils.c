@@ -8,6 +8,12 @@
 #include "utils.h"
 
 /**
+ * @brief Utils class to check if a string ends with a specific value
+ *
+ * @note -
+ *
+ * @param str String value to be searched on
+ * @param suffix Suffix to search on the string passed
  *
  */
 int ENDSWITH(const char *str, const char *suffix)
@@ -22,9 +28,12 @@ int ENDSWITH(const char *str, const char *suffix)
 }
 
 /**
+ * @brief Reset wifi configuration and connection
+ *
+ * @note -
  *
  */
-esp_err_t wifi_reset_config()
+esp_err_t RESET_WIFI()
 {
     esp_err_t ret = esp_wifi_restore();
     if (ret != ESP_OK)
@@ -37,4 +46,19 @@ esp_err_t wifi_reset_config()
         return ret;
     }
     return ESP_OK;
+}
+
+/**
+ * @brief System monitorization function
+ *
+ * @note -
+ *
+ */
+void MONITOR_SYSTEM()
+{
+
+    printf("DRAM usage %d \n", esp_get_free_heap_size());
+    printf("Toal RAM usage %d \n", esp_get_free_internal_heap_size());
+    // TODO configurable delay
+    // vTaskDelay(5000 / portTICK_PERIOD_MS);
 }

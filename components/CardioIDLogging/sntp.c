@@ -30,7 +30,13 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_FAIL_BIT BIT1
 static const char *TAG = "WIFI";
 
-void time_sync_notification_cb(struct timeval *tv)
+/**
+ * @brief -
+ *
+ * @note -
+ *
+ */
+void TIME_SYNC_NOTIFICATION_CB(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Notification of a time synchronization event");
 }
@@ -61,7 +67,13 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     }
 }
 
-void wifi_init_sta(void)
+/**
+ * @brief -
+ *
+ * @note -
+ *
+ */
+void WIFI_INIT_STA(void)
 {
     s_wifi_event_group = xEventGroupCreate();
 
@@ -143,6 +155,12 @@ void wifi_init_sta(void)
     vEventGroupDelete(s_wifi_event_group);
 }
 
+/**
+ * @brief -
+ *
+ * @note -
+ *
+ */
 void GET_DATE_TIME(char *date_time, bool is_filename)
 {
     char strftime_buf[64];
@@ -167,22 +185,34 @@ void GET_DATE_TIME(char *date_time, bool is_filename)
     strcpy(date_time, strftime_buf);
 }
 
-static void initialize_sntp(void)
+/**
+ * @brief -
+ *
+ * @note -
+ *
+ */
+static void INITIALIZE_SNTP(void)
 {
     ESP_LOGI(TAG, "Initializing SNTP");
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "pool.ntp.org");
-    sntp_set_time_sync_notification_cb(time_sync_notification_cb);
+    sntp_set_time_sync_notification_cb(TIME_SYNC_NOTIFICATION_CB);
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
     sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
 #endif
     sntp_init();
 }
 
-static void obtain_time(void)
+/**
+ * @brief -
+ *
+ * @note -
+ *
+ */
+static void OBTAIN_TIME(void)
 {
 
-    initialize_sntp();
+    INITIALIZE_SNTP();
     // wait for time to be set
     time_t now = 0;
     struct tm timeinfo = {0};
@@ -197,7 +227,13 @@ static void obtain_time(void)
     localtime_r(&now, &timeinfo);
 }
 
-void Set_SystemTime_SNTP()
+/**
+ * @brief -
+ *
+ * @note -
+ *
+ */
+void SET_SYSTEMTIME_SNTP()
 {
 
     time_t now;
@@ -208,16 +244,22 @@ void Set_SystemTime_SNTP()
     if (timeinfo.tm_year < (2016 - 1900))
     {
         ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
-        obtain_time();
+        OBTAIN_TIME();
         // update 'now' variable with current time
         time(&now);
     }
 }
 
+/**
+ * @brief -
+ *
+ * @note -
+ *
+ */
 void SNTP_INIT(void)
 {
     // Force disconnection
-    wifi_reset_config();
+    RESET_WIFI();
 
     // Initialize NVS
     esp_err_t ret = nvs_flash_init();
@@ -229,7 +271,7 @@ void SNTP_INIT(void)
     ESP_ERROR_CHECK(ret);
 
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-    wifi_init_sta();
+    WIFI_INIT_STA();
 
-    Set_SystemTime_SNTP();
+    SET_SYSTEMTIME_SNTP();
 }

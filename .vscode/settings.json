@@ -16,6 +16,7 @@
         "crypto.h": "c",
         "esp32_wifi_driver.h": "c",
         "sntp_client.h": "c",
-        "sntp.h": "c"
+        "sntp.h": "c",
+        "cidlogging.h": "c"
     }
 }

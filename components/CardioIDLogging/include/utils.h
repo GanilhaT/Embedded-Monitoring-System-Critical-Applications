@@ -52,4 +52,6 @@
 
 int ENDSWITH(const char *str, const char *suffix);
 
-esp_err_t wifi_reset_config();
+esp_err_t RESET_WIFI();
+
+void MONITOR_SYSTEM();

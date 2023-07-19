@@ -9,13 +9,11 @@
 
 #include "cidlogging.h"
 
+#define TOTAL_CALL_AMOUNT 200
+#define PERFMON_TRACELEVEL -1 // -1 - will ignore trace level
+
 void app_main(void)
 {
-	/*
-	char* TAG = "MyModule";
-	esp_ipc_call(1, CARDIO_LOG, TAG);
-	*/
-
 	CARDIO_LOGGING_INIT();
 
 	char *TAG = "LOG_TEST";
@@ -23,6 +21,7 @@ void app_main(void)
 	CARDIO_LOG(TAG, "Warning Log", 1);
 	CARDIO_LOG(TAG, "Information Log", 2);
 	CARDIO_LOG(TAG, "Debug Log", 3);
+	CARDIO_LOG(TAG, "Verbose Log", 4);
 
 	SEND_LOG_OVER_SSH();
 

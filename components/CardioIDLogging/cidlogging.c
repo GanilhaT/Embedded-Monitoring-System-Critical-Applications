@@ -23,6 +23,10 @@
 #include "utils.h"
 
 TaskHandle_t loggingTaskHandle = NULL;
+#define LOG_BUFFER_SIZE 1024 // Choose an appropriate buffer size
+static char log_buffer[LOG_BUFFER_SIZE];
+static int log_buffer_pos = 0;
+char filename[100];
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,8 +34,6 @@ TaskHandle_t loggingTaskHandle = NULL;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// This file stream will be used for logging
-static FILE *log_file;
 // This example can use SDMMC and SPI peripherals to communicate with SD card.
 // By default, SDMMC peripheral is used.
 // To enable SPI mode, uncomment the following line:
@@ -64,10 +66,6 @@ static FILE *log_file;
  */
 static int PRINT_TO_SD_CARD(const char *fmt, va_list list)
 {
-	if (log_file == NULL)
-	{
-		return -1;
-	}
 	// Get timestamp
 	char current_date_time[100];
 	GET_DATE_TIME(current_date_time, false);
@@ -76,12 +74,23 @@ static int PRINT_TO_SD_CARD(const char *fmt, va_list list)
 	char modified_fmt[strlen(current_date_time) + strlen(fmt) + 1];
 	sprintf(modified_fmt, "[%s] %s", current_date_time, fmt);
 
-	int res = vfprintf(log_file, modified_fmt, list);
-	// Committing changes to the file on each write is slower,
-	// but ensures that no data will be lost.
-	// fsync after might be called every 50 log messages or so,
-	// or after 100ms passed since last fsync, and so on.
-	fsync(fileno(log_file));
+	int res = vsnprintf(log_buffer + log_buffer_pos, LOG_BUFFER_SIZE - log_buffer_pos, modified_fmt, list);
+
+	if (res >= 0 && log_buffer_pos + res < LOG_BUFFER_SIZE)
+	{
+		log_buffer_pos += res;
+	}
+	else
+	{
+		log_buffer_pos = 0;
+
+		// Retry writing the message to the buffer
+		res = vsnprintf(log_buffer, LOG_BUFFER_SIZE, modified_fmt, list);
+		if (res >= 0 && res < LOG_BUFFER_SIZE)
+		{
+			log_buffer_pos = res;
+		}
+	}
 
 	return res;
 }
@@ -172,8 +181,6 @@ void MOUNT_SD_CARD()
 void CREATE_LOG_FILE()
 {
 	char *TAG = "LOGFILE";
-	// Open the specified file for reading
-	char filename[100];
 	// Initialize string
 	strcpy(filename, "");
 	strcat(filename, LOG_FILE_DIR);
@@ -183,6 +190,8 @@ void CREATE_LOG_FILE()
 	GET_DATE_TIME(current_date_time, true);
 	strcat(filename, current_date_time);
 	strcat(filename, ".txt");
+	// Open the specified file for reading
+	FILE *log_file;
 	// Set the file stream
 	log_file = fopen(filename, "a");
 	if (log_file == NULL)
@@ -193,6 +202,7 @@ void CREATE_LOG_FILE()
 	{
 		ESP_LOGI(TAG, "File %s opened", filename);
 		ESP_LOGI(TAG, "Redirecting log output to SD card!");
+		fclose(log_file);
 		esp_log_set_vprintf(PRINT_TO_SD_CARD);
 	}
 }
@@ -251,6 +261,19 @@ void CARDIO_LOG(char *TAG, char *message, int level)
  */
 void SEND_LOG_OVER_SSH()
 {
+	// Open the specified file for reading
+	FILE *log_file;
+	// Set the file stream
+	log_file = fopen(filename, "a");
+	if (log_buffer_pos > 0)
+	{
+		if (log_file != NULL)
+		{
+			fwrite(log_buffer, sizeof(char), log_buffer_pos, log_file);
+			fflush(log_file);
+			fsync(fileno(log_file));
+		}
+	}
 	fclose(log_file);
 	log_file = NULL;
 	esp_log_set_vprintf(&vprintf);

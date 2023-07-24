@@ -170,7 +170,7 @@ void GET_DATE_TIME(char *date_time, bool is_filename)
     localtime_r(&now, &timeinfo);
 
     // Set timezone
-    setenv("TZ", "UTC-01:00", 1);
+    setenv("TZ", "UTC-00:00", 1);
     tzset();
     localtime_r(&now, &timeinfo);
 

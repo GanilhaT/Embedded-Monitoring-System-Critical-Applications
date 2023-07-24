@@ -240,6 +240,7 @@ error_list sftpClientTest(void)
                     // Initialize string
                     strcpy(temp_filename, "");
                     strcat(temp_filename, APP_SFTP_TEMP_FILENAME);
+                    strcat(temp_filename, "cardioid");
                     strcat(temp_filename, ent->d_name);
                     TRACE_INFO("Creating File with %s - %s...\r\n", temp_filename,
                                ipAddrToString(&ipAddr, NULL));
@@ -325,6 +326,7 @@ error_list sftpClientTest(void)
                     // Initialize string
                     strcpy(filename, "");
                     strcat(filename, APP_SFTP_FILENAME);
+                    strcat(filename, "cardioid");
                     strcat(filename, ent->d_name);
 
                     TRACE_INFO("Renaming File %s to %s...\r\n", temp_filename, filename,

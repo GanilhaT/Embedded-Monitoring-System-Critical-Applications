@@ -74,7 +74,7 @@ static int PRINT_TO_SD_CARD(const char *fmt, va_list list)
 
 	// Construct the modified format string with the prefix
 	char modified_fmt[strlen(current_date_time) + strlen(fmt) + 1];
-	sprintf(modified_fmt, "[%s] %s", current_date_time, fmt);
+	sprintf(modified_fmt, "[%s] %s %s", current_date_time, DEVICE_ID, fmt);
 
 	int res = vfprintf(log_file, modified_fmt, list);
 	// Committing changes to the file on each write is slower,
@@ -177,7 +177,9 @@ void CREATE_LOG_FILE()
 	// Initialize string
 	strcpy(filename, "");
 	strcat(filename, LOG_FILE_DIR);
-	strcat(filename, "/cardioid-");
+	strcat(filename, "/");
+	strcat(filename, DEVICE_ID);
+	strcat(filename, "-");
 	// Get timestamp to be used to create the file
 	char current_date_time[100];
 	GET_DATE_TIME(current_date_time, true);
@@ -283,7 +285,7 @@ void LOGGING_TASK(void *arg)
 	{
 		// Task logic here
 		char *TAG = "LOG_TASK_TEST";
-		CARDIO_LOG(TAG, "Error Log", 0);
+		// CARDIO_LOG(TAG, "Error Log", 0);
 		CARDIO_LOG(TAG, "Warning Log", 1);
 		CARDIO_LOG(TAG, "Information Log", 2);
 		CARDIO_LOG(TAG, "Debug Log", 3);

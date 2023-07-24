@@ -50,6 +50,8 @@
 #define APP_SFTP_FILENAME "/home/ganilha/kibana/"
 #define LOG_FILE_DIR "/sdcard"
 
+#define DEVICE_ID "1"
+
 int ENDSWITH(const char *str, const char *suffix);
 
 esp_err_t RESET_WIFI();

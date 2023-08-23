@@ -14,6 +14,7 @@
 
 void app_main(void)
 {
+	// Test commit
 	CARDIO_LOGGING_INIT();
 
 	char *TAG = "LOG_TEST";

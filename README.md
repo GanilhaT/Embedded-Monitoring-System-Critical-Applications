@@ -29,7 +29,7 @@ In this section, I'll present the main elements composing the Cloud's implementa
 
 ## ESP-IDF
 
-This is a template application to be used with [Espressif IoT Development Framework](https://github.com/espressif/esp-idf).
+The application was developed with [Espressif IoT Development Framework](https://github.com/espressif/esp-idf).
 
 Please check [ESP-IDF docs](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for getting started instructions.
 

@@ -21,22 +21,17 @@ CardioWheel is an IoT solution created by CardioID that monitors the overall sta
 
 The work carried out within the scope of this dissertation aims to investigate and propose a solution that complies with all the mentioned limitations in IoT systems to allow a dynamic monitoring process of CardioWheel.
 
-On this repository I will focus on showing how to set up a cloud environment prepared to receive logging data generated from the implementation proposed to the CardioWheel devices.
+On this repository I will focus on showing how to set up the environment prepared to receive logging data generated from the implementation proposed to the CardioWheel devices.
 
 # Proposed Approach
 
-In this section, I'll present the main elements composing the Cloud's implementation of the logging system: communication, parsing tool, search engine, and visualization tool. The technologies were instantiated on the same physical machine with a Linux operating system and an Ubuntu 20.04.3 LTS distribution. We utilized the following hardware components: two 4 GB DDR3 RAM sticks with 1600 MHz of speed; Intel(R) Pentium(R) CPU G3240 @ 3.10GHz processor; 500 GB Hard Drive.
+In this section, I'll present the environment used to develop the embebbed logging library and the main elements composing the Cloud's implementation of the logging system: communication, parsing tool, search engine, and visualization tool. The technologies were instantiated on the same physical machine with a Linux operating system and an Ubuntu 20.04.3 LTS distribution. We utilized the following hardware components: two 4 GB DDR3 RAM sticks with 1600 MHz of speed; Intel(R) Pentium(R) CPU G3240 @ 3.10GHz processor; 500 GB Hard Drive.
 
 ## ESP-IDF
 
 The application was developed with [Espressif IoT Development Framework](https://github.com/espressif/esp-idf).
 
 Please check [ESP-IDF docs](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for getting started instructions.
-
-*Code in this repository is in the Public Domain (or CC0 licensed, at your option.)
-Unless required by applicable law or agreed to in writing, this
-software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-CONDITIONS OF ANY KIND, either express or implied.*
 
 ## Communication
 

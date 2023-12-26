@@ -5,6 +5,7 @@ Repository for the code developed in the context of my thesis entitled "Monitori
 ## Table of contents
 - [Overview](#overview)
 - [Proposed Approach](#proposed-approach)
+    - [ESP-IDF](#esp-idf)
     - [Communication](#communication)
     - [Parsing Tool](#parsing-tool)
     - [OpenSearch](#opensearch)
@@ -25,6 +26,17 @@ On this repository I will focus on showing how to set up a cloud environment pre
 # Proposed Approach
 
 In this section, I'll present the main elements composing the Cloud's implementation of the logging system: communication, parsing tool, search engine, and visualization tool. The technologies were instantiated on the same physical machine with a Linux operating system and an Ubuntu 20.04.3 LTS distribution. We utilized the following hardware components: two 4 GB DDR3 RAM sticks with 1600 MHz of speed; Intel(R) Pentium(R) CPU G3240 @ 3.10GHz processor; 500 GB Hard Drive.
+
+## ESP-IDF
+
+This is a template application to be used with [Espressif IoT Development Framework](https://github.com/espressif/esp-idf).
+
+Please check [ESP-IDF docs](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for getting started instructions.
+
+*Code in this repository is in the Public Domain (or CC0 licensed, at your option.)
+Unless required by applicable law or agreed to in writing, this
+software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied.*
 
 ## Communication
 

@@ -30,6 +30,7 @@ In this section, I'll present the environment used to develop the embebbed loggi
 ## ESP-IDF
 
 The application was developed with [Espressif IoT Development Framework Plugin](https://github.com/espressif/esp-idf) (version 4.4.4) and [Visual Studio Code](https://code.visualstudio.com) (version 1.85.0)
+
 Please check [ESP-IDF docs](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for getting started instructions.
 
 ## Communication

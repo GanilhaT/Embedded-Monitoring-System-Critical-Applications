@@ -281,16 +281,16 @@ void LOGGING_TASK(void *arg)
 	int coreId = xPortGetCoreID();
 	// Print the core ID before performing logging
 	printf("Logging task running on Core %d\n", coreId);
+	char *TAG = "LOG_TASK_TEST";
 	while (1)
 	{
 		// Task logic here
-		char *TAG = "LOG_TASK_TEST";
 		// CARDIO_LOG(TAG, "Error Log", 0);
 		CARDIO_LOG(TAG, "Warning Log", 1);
 		CARDIO_LOG(TAG, "Information Log", 2);
-		CARDIO_LOG(TAG, "Debug Log", 3);
-		CARDIO_LOG(TAG, "Verbose Log", 4);
-		vTaskDelay(pdMS_TO_TICKS(10000)); // Delay for 10 seconds
+		//CARDIO_LOG(TAG, "Debug Log", 3);
+		//CARDIO_LOG(TAG, "Verbose Log", 4);
+		vTaskDelay(pdMS_TO_TICKS(1000)); // Delay for 1 seconds
 	}
 }
 

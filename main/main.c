@@ -18,11 +18,20 @@ void app_main(void)
 	CARDIO_LOGGING_INIT();
 
 	char *TAG = "LOG_TEST";
-	CARDIO_LOG(TAG, "Error Log", 0);
 	CARDIO_LOG(TAG, "Warning Log", 1);
 	CARDIO_LOG(TAG, "Information Log", 2);
-	CARDIO_LOG(TAG, "Debug Log", 3);
-	CARDIO_LOG(TAG, "Verbose Log", 4);
+
+	/* The while loop was used to test long logging sessions
+	while (1) 
+	{
+		CARDIO_LOG(TAG, "Warning Log", 1);
+		CARDIO_LOG(TAG, "Information Log", 2);
+		sleep(1);
+	}
+	*/
+	//CARDIO_LOG(TAG, "Error Log", 0);
+	//CARDIO_LOG(TAG, "Debug Log", 3);
+	//CARDIO_LOG(TAG, "Verbose Log", 4);
 
 	SEND_LOG_OVER_SSH();
 

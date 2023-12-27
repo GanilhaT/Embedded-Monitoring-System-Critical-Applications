@@ -236,6 +236,41 @@ error_list sftpClientTest(void)
             {
                 if (ent->d_type == DT_REG && ENDSWITH(ent->d_name, ".txt"))
                 {
+                    // Setting final file name
+                    char filename[100];
+                    // Initialize string
+                    strcpy(filename, "");
+                    strcat(filename, APP_SFTP_FILENAME);
+                    strcat(filename, "cardioid");
+                    strcat(filename, ent->d_name);
+
+                    TRACE_INFO("Checking File %s - %s...\r\n", filename,
+                               ipAddrToString(&ipAddr, NULL));
+
+                    error = sftpClientOpenFile(&sftpClientContext, filename,
+                                               SSH_FXF_READ);
+                    if (!error)
+                    {
+                        // Close file
+                        error = sftpClientCloseFile(&sftpClientContext);
+                        TRACE_INFO("File %s Already Exists... Cancelling transmission - %s...\r\n", filename,
+                               ipAddrToString(&ipAddr, NULL));
+                        // Attempt to delete the file
+                        strcpy(filename, "");
+                        strcat(filename, LOG_FILE_DIR);
+                        strcat(filename, "/");
+                        strcat(filename, ent->d_name);
+                        if (remove(filename) == 0)
+                        {
+                            TRACE_INFO("Log file deleted %s \n", filename);
+                        }
+                        else
+                        {
+                            TRACE_INFO("Failed to delete file %s \n", filename);
+                        }
+                        continue;
+                    }
+                    
                     char temp_filename[100];
                     // Initialize string
                     strcpy(temp_filename, "");
@@ -251,7 +286,7 @@ error_list sftpClientTest(void)
                     {
                         TRACE_INFO("Error while opening File %s...\r\n",
                                    ipAddrToString(&ipAddr, NULL));
-                        break;
+                        continue;
                     }
 
                     // Close file
@@ -261,7 +296,7 @@ error_list sftpClientTest(void)
                     {
                         TRACE_INFO("Error while closing File %s...\r\n",
                                    ipAddrToString(&ipAddr, NULL));
-                        break;
+                        continue;
                     }
 
                     // sleep(1000);
@@ -276,7 +311,7 @@ error_list sftpClientTest(void)
                     {
                         TRACE_INFO("Error while opening File %s...\r\n",
                                    ipAddrToString(&ipAddr, NULL));
-                        break;
+                        continue;
                     }
 
                     // Write to file
@@ -290,7 +325,7 @@ error_list sftpClientTest(void)
                     if (file == NULL)
                     {
                         TRACE_INFO("Error opening the local file %s \n", logfilepath);
-                        break;
+                        continue;
                     }
 
                     // Read the file line by line
@@ -302,7 +337,7 @@ error_list sftpClientTest(void)
                         {
                             TRACE_INFO("Error while writing to File %s...\r\n",
                                        ipAddrToString(&ipAddr, NULL));
-                            break;
+                            continue;
                         }
                     }
                     // Close the file
@@ -318,17 +353,10 @@ error_list sftpClientTest(void)
                     {
                         TRACE_INFO("Error while closing File %s...\r\n",
                                    ipAddrToString(&ipAddr, NULL));
-                        break;
+                        continue;
                     }
 
                     // Open the specified file for reading
-                    char filename[100];
-                    // Initialize string
-                    strcpy(filename, "");
-                    strcat(filename, APP_SFTP_FILENAME);
-                    strcat(filename, "cardioid");
-                    strcat(filename, ent->d_name);
-
                     TRACE_INFO("Renaming File %s to %s...\r\n", temp_filename, filename,
                                ipAddrToString(&ipAddr, NULL));
                     error = sftpClientRenameFile(&sftpClientContext, temp_filename, filename);
@@ -336,7 +364,7 @@ error_list sftpClientTest(void)
                     {
                         TRACE_INFO("Error renaming File %s...\r\n",
                                    ipAddrToString(&ipAddr, NULL));
-                        break;
+                        continue;
                     }
 
                     // Attempt to delete the file
